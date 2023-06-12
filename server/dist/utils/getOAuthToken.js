@@ -12,18 +12,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const getOAuthToken_1 = require("../utils/getOAuthToken");
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-function loginHandler(req, res) {
+exports.getOAuthToken = void 0;
+const axios_1 = __importDefault(require("axios"));
+const qs_1 = __importDefault(require("qs"));
+require("dotenv/config");
+function getOAuthToken(code) {
     return __awaiter(this, void 0, void 0, function* () {
-        const code = req.query.code;
-        const { id_token, access_token } = yield (0, getOAuthToken_1.getOAuthToken)(code);
-        console.log({ id_token, access_token });
-        const decoded = jsonwebtoken_1.default.decode(id_token);
-        console.log(decoded);
-        res.json({
+        const url = 'https://oauth2.googleapis.com/token';
+        const values = {
             code: code,
-        });
+            client_id: process.env.GOOGLE_CLIENT_ID,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET,
+            redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URL,
+            grant_type: "authorization_code"
+        };
+        try {
+            const res = yield axios_1.default.post(url, qs_1.default.stringify(values), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+            });
+            return res.data;
+        }
+        catch (e) {
+            console.error(e, "Failed to fetch google token");
+            throw (e);
+        }
     });
 }
-exports.default = loginHandler;
+exports.getOAuthToken = getOAuthToken;
