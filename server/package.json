@@ -16,7 +16,8 @@
     "dotenv": "^16.1.4",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
-    "pg": "^8.11.0"
+    "pg": "^8.11.0",
+    "postgres": "^3.3.5"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",

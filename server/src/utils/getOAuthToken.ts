@@ -10,6 +10,7 @@ interface GoogleTokenResult {
   scope: string,
   id_token: string
 }
+
 export async function getOAuthToken(code:string):Promise<GoogleTokenResult> {
     const url = 'https://oauth2.googleapis.com/token'
     const values = {

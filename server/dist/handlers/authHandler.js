@@ -12,8 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.loginHandler = void 0;
 const getOAuthToken_1 = require("../utils/getOAuthToken");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const database_1 = __importDefault(require("../utils/database"));
+const queries_1 = require("./queries");
 function getUserFromToken(token) {
     var _a, _b;
     const decoded = jsonwebtoken_1.default.decode(token);
@@ -22,18 +25,28 @@ function getUserFromToken(token) {
         email: (_b = decoded === null || decoded === void 0 ? void 0 : decoded.email) !== null && _b !== void 0 ? _b : ' ',
         picture: decoded === null || decoded === void 0 ? void 0 : decoded.picture
     };
-    console.log(user);
     return user;
 }
 function loginHandler(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const code = req.query.code;
         const { id_token, access_token } = yield (0, getOAuthToken_1.getOAuthToken)(code);
-        console.log({ id_token, access_token });
-        const user = getUserFromToken(id_token);
-        res.json({
-            user: user,
-        });
+        const googleUser = getUserFromToken(id_token);
+        const email = googleUser.email;
+        const client = yield database_1.default.connect();
+        try {
+            yield client.query("BEGIN");
+            const isUserExist = yield client.query(queries_1.getUserbyEmail, [email]);
+            if (isUserExist.rowCount === 0) {
+                const newInsertedUser = yield client.query(queries_1.insertUser, [googleUser.name, googleUser.email, googleUser.picture]);
+                yield client.query('COMMIT');
+                return res.json(newInsertedUser);
+            }
+            res.json(isUserExist.rows);
+        }
+        catch (e) {
+            console.log(e);
+        }
     });
 }
-exports.default = loginHandler;
+exports.loginHandler = loginHandler;
