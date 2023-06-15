@@ -17,6 +17,7 @@ const getOAuthToken_1 = require("../utils/getOAuthToken");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const database_1 = __importDefault(require("../utils/database"));
 const queries_1 = require("./queries");
+const jwt_1 = require("../utils/jwt");
 function getUserFromToken(token) {
     var _a, _b;
     const decoded = jsonwebtoken_1.default.decode(token);
@@ -36,13 +37,34 @@ function loginHandler(req, res) {
         const client = yield database_1.default.connect();
         try {
             yield client.query("BEGIN");
-            const isUserExist = yield client.query(queries_1.getUserbyEmail, [email]);
-            if (isUserExist.rowCount === 0) {
+            let checkUser = yield client.query(queries_1.getUserbyEmail, [email]);
+            if (checkUser.rowCount === 0) {
                 const newInsertedUser = yield client.query(queries_1.insertUser, [googleUser.name, googleUser.email, googleUser.picture]);
+                console.log(newInsertedUser);
                 yield client.query('COMMIT');
-                return res.json(newInsertedUser);
+                checkUser = yield client.query(queries_1.getUserbyEmail, [email]);
             }
-            res.json(isUserExist.rows);
+            req.session.user = { user: checkUser.rows[0] };
+            const access_token = (0, jwt_1.signJwt)(Object.assign(Object.assign({}, checkUser), { session: req.session.user }), { expiresIn: "15m" });
+            const refresh_token = (0, jwt_1.signJwt)(Object.assign(Object.assign({}, checkUser), { session: req.session.user }), { expiresIn: "1y" });
+            res.cookie("access_token", access_token, {
+                maxAge: 900000,
+                httpOnly: true,
+                domain: "localhost",
+                path: "/",
+                sameSite: "strict",
+                secure: false,
+            });
+            res.cookie("refresh_token", refresh_token, {
+                maxAge: 3.154e10,
+                httpOnly: true,
+                domain: "localhost",
+                path: "/",
+                sameSite: "strict",
+                secure: false,
+            });
+            console.log(checkUser.rows[0].id);
+            res.json(checkUser.rows);
         }
         catch (e) {
             console.log(e);
