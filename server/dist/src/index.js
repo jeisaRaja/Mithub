@@ -21,7 +21,7 @@ server.use((0, express_session_1.default)({
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        maxAge: 900000,
+        maxAge: 30000,
     },
     store: sessionStore
 }));

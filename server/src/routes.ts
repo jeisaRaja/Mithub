@@ -1,6 +1,7 @@
 import express, {Router, Request, Response} from 'express'
 import {loginHandler} from './handlers/authHandler'
 import { getUser } from './utils/getUser'
+import checkReqUser from './handlers/checkReqUser'
 const router = Router()
 
 router.route('/')
@@ -12,6 +13,8 @@ router.route('/api/oauth/google')
 router.route('/api/users')
 .get(getUser)
 
+router.route('/api/checkReqUser')
+.get(checkReqUser)
 
 
 

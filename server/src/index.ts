@@ -28,7 +28,7 @@ server.use(session({
   cookie: 
   {
     httpOnly:true,
-    maxAge: 900000,
+    maxAge: 30000,
   },
   store: sessionStore
 }));

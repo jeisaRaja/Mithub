@@ -4,6 +4,7 @@ import jwt, { JwtPayload } from "jsonwebtoken"
 import pool from "../utils/database"
 import { getUser, getUserbyEmail, insertUser } from "./queries"
 import { signJwt } from "../utils/jwt"
+import { RequestWithUser } from "../utils/requestWithUser"
 function getUserFromToken(token:string):User{
   const decoded = jwt.decode(token) as JwtPayload
   const user = {
@@ -19,7 +20,7 @@ interface User {
   email: string,
   picture: string
 }
-export async function loginHandler(req: Request, res: Response){
+export async function loginHandler(req: RequestWithUser, res: Response){
   const code = req.query.code as string
   const {id_token, access_token} = await getOAuthToken(code)
   const googleUser:User = getUserFromToken(id_token)
@@ -36,10 +37,11 @@ export async function loginHandler(req: Request, res: Response){
       checkUser = await client.query(getUserbyEmail, [email])
     }
     req.session.user = {user: checkUser.rows[0]} as any
-    const access_token:string = signJwt({...checkUser, session: req.session.user}, {expiresIn: "15m"})
+    req.user = checkUser.rows[0]
+    const access_token:string = signJwt({...checkUser, session: req.session.user}, {expiresIn: "30s"})
     const refresh_token:string = signJwt({...checkUser, session: req.session.user}, {expiresIn: "1y"})
     res.cookie("access_token", access_token, {
-      maxAge: 900000, // 15 mins
+      maxAge: 30000, // 15 mins
       httpOnly: true,
       domain: "localhost",
       path: "/",
@@ -55,7 +57,6 @@ export async function loginHandler(req: Request, res: Response){
       sameSite: "strict",
       secure: false,
     });
-
     console.log(checkUser.rows[0].id)
     res.json(checkUser.rows)
   } catch(e){

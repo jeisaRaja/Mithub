@@ -45,10 +45,11 @@ function loginHandler(req, res) {
                 checkUser = yield client.query(queries_1.getUserbyEmail, [email]);
             }
             req.session.user = { user: checkUser.rows[0] };
-            const access_token = (0, jwt_1.signJwt)(Object.assign(Object.assign({}, checkUser), { session: req.session.user }), { expiresIn: "15m" });
+            req.user = checkUser.rows[0];
+            const access_token = (0, jwt_1.signJwt)(Object.assign(Object.assign({}, checkUser), { session: req.session.user }), { expiresIn: "30s" });
             const refresh_token = (0, jwt_1.signJwt)(Object.assign(Object.assign({}, checkUser), { session: req.session.user }), { expiresIn: "1y" });
             res.cookie("access_token", access_token, {
-                maxAge: 900000,
+                maxAge: 30000,
                 httpOnly: true,
                 domain: "localhost",
                 path: "/",
